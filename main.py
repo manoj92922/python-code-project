@@ -1,0 +1,156 @@
+#By parth shah , Tool Kit
+# For explaination and testing, visit : https://youtu.be/mnNdOPMZdjQ
+
+import pyttsx3
+import speech_recognition as sr
+import datetime
+import wikipedia
+import webbrowser
+import os
+import smtplib
+import time
+import serial
+
+ArduinoSerial = serial.Serial(port = "COM4", baudrate=115200)
+time.sleep(2) #wait for 2 seconds for the communication to get established
+
+
+
+MASTER = "Parth Master..."
+
+engine = pyttsx3.init('sapi5')
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[0].id)
+
+def speak(text):
+    engine.say(text)
+    engine.runAndWait()
+
+def wishMe():
+    hour = int(datetime.datetime.now().hour)
+    
+    if hour>=0 and hour<12:
+        speak("Good Morning" + MASTER)
+    elif hour>=12 and hour<18:
+        speak("Good Afternoon" + MASTER)
+    else:
+        speak("Good Evening" + MASTER)
+    speak("I am Jarvis... How may I help you?")
+
+def takeCommand():
+    query = None
+    while query is None:
+        r = sr.Recognizer()
+        with sr.Microphone() as source:
+            print("Listening...")
+            speak("Beep")
+            audio = r.listen(source)
+
+        try:
+            print("Recognising...")
+            query = r.recognize_google(audio, language= 'en-us')
+            print(f"user said: {query}\n")
+            print(query)
+
+        except Exception:
+            print("Say that again please...")
+            speak("Say that again please...")
+            query = None
+    
+    if 'Wikipedia' in query:
+        query = query.lower()
+        speak('Ok... I am searching in wikipedia')
+        query = query.replace("wikipedia","")
+        results = wikipedia.summary(query, sentences = 5 )
+        print(results)
+        speak(results)
+
+
+    elif 'YouTube' in query:
+        crome_path = "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe %s"
+        webbrowser.get(crome_path).open(url = "youtube.com")
+    
+    elif 'time' in query:
+        strTime = datetime.datetime.now().strftime("%H:%M:%S")
+        speak(f"{MASTER} the time is {strTime}")
+    
+    if 'timer' in query:
+        speak("{MASTER} for how much time?")
+        query2 = None
+        while query2 is None:   
+            r2 = sr.Recognizer()
+            with sr.Microphone() as source:
+                print("Listening...")
+                speak("Beep")
+                audio2 = r2.listen(source)
+
+            try:
+                print("Recognising...")
+                query2 = r2.recognize_google(audio2, language= 'en-us')
+                print(f"user said: {query2}\n")
+                print(query2)
+                break
+
+            except Exception:
+                print("Say that again please...")
+                speak("Say that again please...")
+                query2 = None
+        
+        time1 = ""
+
+        for i in query2:
+            if i.isdigit():
+                time1 = time1 + i
+        time2 = int(time1)
+
+        if 'minutes'or 'minute' in query2:
+            speak("Ok, your time starts now!")
+            time.sleep(60*time2)
+            speak("the time is up "+MASTER)
+
+        elif 'seconds' in query2:
+            speak("Ok, your time starts now!")
+            time.sleep(time2)
+            speak("the time is up "+MASTER)
+            
+        else:
+            speak("No timer was set")
+
+    elif 'Google' in query:
+        speak("{MASTER} what do you want to search")
+        query2 = None
+        while query2 is None:   
+            r2 = sr.Recognizer()
+            with sr.Microphone() as source:
+                print("Listening...")
+                speak("Beep")
+                audio2 = r2.listen(source)
+
+            try:
+                print("Recognising...")
+                query2 = r2.recognize_google(audio2, language= 'en-us')
+                print(f"user said: {query2}\n")
+                print(query2)
+                break
+
+            except Exception:
+                print("Say that again please...")
+                speak("Say that again please...")
+                query2 = None
+
+        query2 = query2.replace(" ","+")
+        crome_path = "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe %s"
+        webbrowser.get(crome_path).open(url = "https://www.google.com/search?sxsrf=ALeKk03LrBvejjuPt8DAQJem8SQiI9kzog%3A1584946711463&source=hp&ei=F154XsHBGfOf4-EP5rqiiAk&q="+query2+"&oq="+query2+"&gs_l=psy-ab.3..0i131j0j0i131l3j0j0i131j0l2j0i131.1780.2102..2729...2.0..0.181.356.0j2......0....1..gws-wiz.....10..35i362i39j35i39.ewj0sNfGivY&ved=0ahUKEwiBqePNgrDoAhXzzzgGHWadCJEQ4dUDCAY&uact=5") 
+
+
+def main():
+    print("Initializing Jarvis")
+    speak("Initializing... Jarvis...")
+    while True:
+        incoming = str (ArduinoSerial.readline()) #read the serial data and print it as line
+        
+        if 'yes' in incoming:
+            wishMe()
+            takeCommand()
+            
+main()
